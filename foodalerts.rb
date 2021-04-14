@@ -36,7 +36,8 @@ module FoodAlerts
     end
   end
 
-  @last_poll = Time.parse('2021-04-13')
+  # @last_poll = Time.now
+  @last_poll = Time.parse('2021-04-07')
   @api = FoodAlerts::API.new
 
   def self.check_for_new
@@ -47,6 +48,7 @@ module FoodAlerts
       title = item['title']
       url = item['alertURL']
       tweet = "#{title}\n#{url}"
+      puts '[+] Tweeting'
       puts tweet
       # FoodAlerts.twitter.update(tweet)
       # Sleep for half an hour in case there's a bunch that we want to space out
