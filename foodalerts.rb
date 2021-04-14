@@ -65,8 +65,10 @@ module FoodAlerts
 
     @scheduler = Rufus::Scheduler.new
 
-    @scheduler.every '1h' do
+    @scheduler.every '1h', first_at: Time.now + 10 do
+      puts "[+] Job triggered at #{Time.now}"
       FoodAlerts.check_for_new
+      puts "[+] Job completed at #{Time.now}"
     end
 
     class << self; attr_accessor :scheduler; end
