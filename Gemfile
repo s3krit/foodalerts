@@ -12,3 +12,5 @@ gem "rufus-scheduler"
 group :development do
   gem 'pry'
 end
+
+gem "dotenv", "~> 2.7"
