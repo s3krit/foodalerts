@@ -22,14 +22,22 @@ module FoodAlerts
     def initialize
       @base_url = 'https://data.food.gov.uk/food-alerts'
       @client = HTTPClient.new(nil, 'FoodAlertsBot/0.1', nil)
+      @identifier = ENV['BSKY_IDENTIFIER']
+      @password = ENV['BSKY_PASSWORD']
+      auth
+      puts @did
+      puts @handle
+      puts @email
+      puts @access_jwt
+      puts @refresh_jwt
+    end
+
+    def auth
       login_url = 'https://bsky.social/xrpc/com.atproto.server.createSession'
-      bsky_identifier = ENV['BSKY_IDENTIFIER']
-      bsky_password = ENV['BSKY_PASSWORD']
       login_body = {
-        identifier: bsky_identifier,
-        password: bsky_password
+        identifier: @identifier,
+        password: @password
       }
-      puts login_body
       res = @client.post(
         login_url,
         login_body.to_json,
@@ -41,20 +49,11 @@ module FoodAlerts
       @email = JSON.parse(res.content)['email']
       @access_jwt = JSON.parse(res.content)['accessJwt']
       @refresh_jwt = JSON.parse(res.content)['refreshJwt']
-      puts @did
-      puts @handle
-      puts @email
-      puts @access_jwt
-      puts @refresh_jwt
     end
 
     # function for posting to bluesky
     def post(content)
       base_url = 'https://bsky.social/xrpc/com.atproto.repo.createRecord'
-      cookies = {
-        ajs_anonymous_id: @ajs_anonymous_id,
-        ajs_user_id: @ajs_user_id
-      }
       post_body = {
         collection: 'app.bsky.feed.post',
         repo: @did,
@@ -65,17 +64,19 @@ module FoodAlerts
           '$type' => 'app.bsky.feed.post'
         }
       }
+      # Reauth before attempting to post
+      auth
       # Send the post with @access_jwt as the Authorization header
       res = @client.post(
         base_url,
         post_body.to_json,
         'Content-Type' => 'application/json',
         'Authorization' => "Bearer #{@access_jwt}",
-        'Cookie' => cookies
       )
       # res = @client.post(base_url, post_body.to_json, 'Content-Type' => 'application/json', 'Cookie' => cookies)
       # res = @client.post(base_url, post_body.to_json, 'Content-Type' => 'application/json')
       puts res.content
+      puts res.status
     end
 
     def list(limit: 10)
@@ -91,8 +92,8 @@ module FoodAlerts
     end
   end
 
-  # @last_poll = Time.now
-  @last_poll = Time.parse('2023-04-01')
+  @last_poll = Time.now
+  # @last_poll = Time.parse('2023-04-01')
   @api = FoodAlerts::API.new
 
   def self.check_for_new
